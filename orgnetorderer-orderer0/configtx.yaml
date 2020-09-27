@@ -1,0 +1,189 @@
+---
+Organizations:
+  - &org1
+    Name: org1
+    ID: org1MSP
+    MSPDir: ../crypto-config/peerOrganizations/org1/msp
+
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('org1MSP.admin','org1MSP.peer','org1MSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('org1MSP.admin','org1MSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('org1MSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('org1MSP.peer')"
+
+    AnchorPeers:
+      - Host: peer0.org1
+        Port: 7051
+
+  - &org2
+    Name: org2
+    ID: org2MSP
+    MSPDir: ../crypto-config/peerOrganizations/org2/msp
+
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('org2MSP.admin','org2MSP.peer','org2MSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('org2MSP.admin','org2MSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('org2MSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('org2MSP.peer')"
+
+    AnchorPeers:
+      - Host: peer0.org2
+        Port: 7051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+
+  Orderer: &OrdererCapabilities
+    V2_0: true
+
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  ACLs: &ACLsDefault
+    _lifecycle/CheckCommitReadiness: /Channel/Application/Writers
+    _lifecycle/CommitChaincodeDefinition: /Channel/Application/Writers
+    _lifecycle/QueryChaincodeDefinition: /Channel/Application/Readers
+    _lifecycle/QueryChaincodeDefinitions: /Channel/Application/Readers
+    lscc/ChaincodeExists: /Channel/Application/Readers
+    lscc/GetDeploymentSpec: /Channel/Application/Readers
+    lscc/GetChaincodeData: /Channel/Application/Readers
+    lscc/GetInstantiatedChaincodes: /Channel/Application/Readers
+    qscc/GetChainInfo: /Channel/Application/Readers
+    qscc/GetBlockByNumber: /Channel/Application/Readers
+    qscc/GetBlockByHash: /Channel/Application/Readers
+    qscc/GetTransactionByID: /Channel/Application/Readers
+    qscc/GetBlockByTxID: /Channel/Application/Readers
+    cscc/GetConfigBlock: /Channel/Application/Readers
+    cscc/GetConfigTree: /Channel/Application/Readers
+    cscc/SimulateConfigTreeUpdate: /Channel/Application/Readers
+    peer/Propose: /Channel/Application/Writers
+    peer/ChaincodeToChaincode: /Channel/Application/Readers
+    event/Block: /Channel/Application/Readers
+    event/FilteredBlock: /Channel/Application/Readers
+
+  Organizations:
+
+  Policies: &ApplicationDefaultPolicies
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+
+  OrdererType: etcdraft
+
+  BatchTimeout: 2s
+
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+
+  MaxChannels: 0
+
+  Organizations:
+
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+
+  Channel:
+    Consortium: SampleConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *org1
+        - *org2
+      Capabilities:
+        <<: *ApplicationCapabilities
+
+  Genesis:
+    <<: *ChannelDefaults
+    Capabilities:
+      <<: *ChannelCapabilities
+    Orderer:
+      <<: *OrdererDefaults
+      OrdererType: etcdraft
+      Addresses:
+      EtcdRaft:
+        Consenters:
+        Options:
+          TickInterval: 500ms
+          ElectionTick: 10
+          HeartbeatTick: 1
+          MaxInflightBlocks: 5
+          SnapshotIntervalSize: 20 MB
+      Organizations:
+      Capabilities:
+        <<: *OrdererCapabilities
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+          - *org1
+          - *org2
