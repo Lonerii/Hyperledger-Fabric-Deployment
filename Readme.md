@@ -648,7 +648,7 @@ peer-cli是我们为了方便操作peer点抽象出的一个组织中的概念�
     peer channel create -o orderer0.orgnetorderer:7050 --tls true --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/orgnetorderer/tlsca/tlsca.orgnetorderer-cert.pem -c testchannel -f /etc/hyperledger/fabric/testchannel.tx 
 
     //加入通道
-    peer channel join -b testchannel.tx
+    peer channel join -b testchannel.block
 
     //查看通道
     peer channel list
